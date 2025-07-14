@@ -89,3 +89,6 @@ coverage-report/
 *.cobertura.xml
 coverage.json
 tools/
+
+# Database
+*.db

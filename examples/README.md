@@ -2,6 +2,33 @@
 
 This directory contains example applications demonstrating various features of the Andy.CodeAnalyzer library.
 
+## Running the Examples
+
+To run any of the examples, use the `dotnet run` command from the examples directory:
+
+```bash
+# From the examples directory
+cd examples
+
+# Run the C# analysis example
+dotnet run -p Examples.csproj --property:StartupObject=Examples.CSharpAnalysisExample
+
+# Run the Python analysis example  
+dotnet run -p Examples.csproj --property:StartupObject=Examples.PythonAnalysisExample
+
+# Run the events example
+dotnet run -p Examples.csproj --property:StartupObject=Examples.EventsExample
+```
+
+Or from the project root:
+
+```bash
+# Run examples from the root directory
+dotnet run --project examples/Examples.csproj --property:StartupObject=Examples.CSharpAnalysisExample
+dotnet run --project examples/Examples.csproj --property:StartupObject=Examples.PythonAnalysisExample
+dotnet run --project examples/Examples.csproj --property:StartupObject=Examples.EventsExample
+```
+
 ## Examples Overview
 
 ### 1. CSharpAnalysisExample.cs

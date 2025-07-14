@@ -15,7 +15,7 @@ namespace Examples
     /// </summary>
     class PythonAnalysisExample
     {
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             // Set up dependency injection
             var services = new ServiceCollection();
@@ -63,7 +63,9 @@ namespace Examples
         
         static async Task AnalyzePythonFile(ICodeAnalyzerService analyzer, string filePath)
         {
-            var structure = await analyzer.GetFileStructureAsync(filePath);
+            var baseDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var fullPath = Path.Combine(baseDir, filePath);
+            var structure = await analyzer.GetFileStructureAsync(fullPath);
             
             Console.WriteLine($"File: {structure.FilePath}");
             Console.WriteLine($"Language: {structure.Language}");

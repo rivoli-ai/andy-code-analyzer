@@ -17,7 +17,7 @@ namespace Examples
     /// </summary>
     class EventsExample
     {
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             // Set up dependency injection
             var services = new ServiceCollection();
@@ -80,12 +80,17 @@ namespace Examples
             Directory.CreateDirectory(testDir);
             
             // Copy some files from our samples to create a mixed project
-            if (File.Exists("sample-csharp/Calculator.cs"))
-                File.Copy("sample-csharp/Calculator.cs", Path.Combine(testDir, "Calculator.cs"), true);
-            if (File.Exists("sample-csharp/UserService.cs"))
-                File.Copy("sample-csharp/UserService.cs", Path.Combine(testDir, "UserService.cs"), true);
-            if (File.Exists("sample-python/data_processor.py"))
-                File.Copy("sample-python/data_processor.py", Path.Combine(testDir, "data_processor.py"), true);
+            var baseDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var csharpSrc = Path.Combine(baseDir, "sample-csharp/Calculator.cs");
+            var userSrc = Path.Combine(baseDir, "sample-csharp/UserService.cs");
+            var pythonSrc = Path.Combine(baseDir, "sample-python/data_processor.py");
+            
+            if (File.Exists(csharpSrc))
+                File.Copy(csharpSrc, Path.Combine(testDir, "Calculator.cs"), true);
+            if (File.Exists(userSrc))
+                File.Copy(userSrc, Path.Combine(testDir, "UserService.cs"), true);
+            if (File.Exists(pythonSrc))
+                File.Copy(pythonSrc, Path.Combine(testDir, "data_processor.py"), true);
             
             // Initialize and index the directory
             await analyzer.InitializeAsync(testDir);
@@ -199,28 +204,34 @@ namespace TestProject
             Directory.CreateDirectory(Path.Combine(workspace, "Services"));
             
             // Copy some C# files
-            if (File.Exists("sample-csharp/UserService.cs"))
+            var baseDir2 = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var userServicePath = Path.Combine(baseDir2, "sample-csharp/UserService.cs");
+            var dataProcessorPath = Path.Combine(baseDir2, "sample-csharp/DataProcessor.cs");
+            var webScraperPath = Path.Combine(baseDir2, "sample-python/web_scraper.py");
+            var fileUtilsPath = Path.Combine(baseDir2, "sample-python/file_utils.py");
+            
+            if (File.Exists(userServicePath))
             {
-                var content = await File.ReadAllTextAsync("sample-csharp/UserService.cs");
+                var content = await File.ReadAllTextAsync(userServicePath);
                 await File.WriteAllTextAsync(Path.Combine(workspace, "Services/UserService.cs"), content);
             }
             
-            if (File.Exists("sample-csharp/DataProcessor.cs"))
+            if (File.Exists(dataProcessorPath))
             {
-                var content = await File.ReadAllTextAsync("sample-csharp/DataProcessor.cs");
+                var content = await File.ReadAllTextAsync(dataProcessorPath);
                 await File.WriteAllTextAsync(Path.Combine(workspace, "DataProcessor.cs"), content);
             }
             
             // Copy some Python files
-            if (File.Exists("sample-python/web_scraper.py"))
+            if (File.Exists(webScraperPath))
             {
-                var content = await File.ReadAllTextAsync("sample-python/web_scraper.py");
+                var content = await File.ReadAllTextAsync(webScraperPath);
                 await File.WriteAllTextAsync(Path.Combine(workspace, "web_scraper.py"), content);
             }
             
-            if (File.Exists("sample-python/file_utils.py"))
+            if (File.Exists(fileUtilsPath))
             {
-                var content = await File.ReadAllTextAsync("sample-python/file_utils.py");
+                var content = await File.ReadAllTextAsync(fileUtilsPath);
                 await File.WriteAllTextAsync(Path.Combine(workspace, "file_utils.py"), content);
             }
             
@@ -233,10 +244,10 @@ namespace TestProject
             
             // Make a change to trigger file watcher
             Console.WriteLine("\nMaking a change to trigger file watcher...");
-            var dataProcessorPath = Path.Combine(workspace, "DataProcessor.cs");
-            if (File.Exists(dataProcessorPath))
+            var dataProcessorPath2 = Path.Combine(workspace, "DataProcessor.cs");
+            if (File.Exists(dataProcessorPath2))
             {
-                var content = await File.ReadAllTextAsync(dataProcessorPath);
+                var content = await File.ReadAllTextAsync(dataProcessorPath2);
                 // Add a new method to the StringDataProcessor class
                 content = content.Replace(
                     "private async Task<string> ProcessStringAsync(string input)",
@@ -248,7 +259,7 @@ namespace TestProject
         
         private async Task<string> ProcessStringAsync(string input)"
                 );
-                await File.WriteAllTextAsync(dataProcessorPath, content);
+                await File.WriteAllTextAsync(dataProcessorPath2, content);
             }
             
             await Task.Delay(2000);

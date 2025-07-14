@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,7 @@ namespace Examples
     /// </summary>
     class CSharpAnalysisExample
     {
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             // Set up dependency injection
             var services = new ServiceCollection();
@@ -40,7 +41,8 @@ namespace Examples
             var analyzer = serviceProvider.GetRequiredService<ICodeAnalyzerService>();
             
             // Initialize with the sample C# project
-            var samplePath = "sample-csharp";
+            var baseDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var samplePath = Path.Combine(baseDir, "sample-csharp");
             Console.WriteLine($"Initializing analyzer with sample C# project at: {samplePath}");
             await analyzer.InitializeAsync(samplePath);
             
@@ -68,7 +70,9 @@ namespace Examples
         static async Task AnalyzeSingleFile(ICodeAnalyzerService analyzer, string filePath)
         {
             // Analyze the specified file
-            var structure = await analyzer.GetFileStructureAsync(filePath);
+            var baseDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var fullPath = Path.Combine(baseDir, filePath);
+            var structure = await analyzer.GetFileStructureAsync(fullPath);
             
             Console.WriteLine($"File: {structure.FilePath}");
             Console.WriteLine($"Language: {structure.Language}");
