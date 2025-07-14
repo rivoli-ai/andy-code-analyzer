@@ -201,6 +201,7 @@ analyzer.IndexingProgress += (sender, e) =>
 - [API Reference](docs/api-reference.md) - Detailed API documentation
 - [C# Analyzer](docs/csharp-analyzer.md) - How the C# analyzer works
 - [Python Analyzer](docs/python-analyzer.md) - How the Python analyzer works
+- [Examples](examples/README.md) - Sample applications demonstrating features
 
 ## Contributing
 
