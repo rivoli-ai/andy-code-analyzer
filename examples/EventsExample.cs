@@ -75,58 +75,17 @@ namespace Examples
                 }
             };
             
-            // Create a test directory with some files
-            var testDir = "test-project";
+            // Use the sample directories for tracking progress
+            var testDir = "sample-mixed";
             Directory.CreateDirectory(testDir);
             
-            // Create sample files
-            await File.WriteAllTextAsync(Path.Combine(testDir, "Calculator.cs"), @"
-namespace TestProject
-{
-    public class Calculator
-    {
-        public int Add(int a, int b) => a + b;
-        public int Subtract(int a, int b) => a - b;
-        public int Multiply(int a, int b) => a * b;
-        public double Divide(int a, int b) => a / (double)b;
-    }
-}");
-            
-            await File.WriteAllTextAsync(Path.Combine(testDir, "StringUtils.cs"), @"
-using System;
-using System.Linq;
-
-namespace TestProject
-{
-    public static class StringUtils
-    {
-        public static string Reverse(string input)
-        {
-            return new string(input.Reverse().ToArray());
-        }
-        
-        public static bool IsPalindrome(string input)
-        {
-            var cleaned = input.ToLower().Replace("" "", """");
-            return cleaned == Reverse(cleaned);
-        }
-    }
-}");
-            
-            await File.WriteAllTextAsync(Path.Combine(testDir, "data_processor.py"), @"
-class DataProcessor:
-    def __init__(self):
-        self.data = []
-    
-    def add_item(self, item):
-        self.data.append(item)
-    
-    def process_all(self):
-        return [self.process_item(item) for item in self.data]
-    
-    def process_item(self, item):
-        return item.upper() if isinstance(item, str) else str(item)
-");
+            // Copy some files from our samples to create a mixed project
+            if (File.Exists("sample-csharp/Calculator.cs"))
+                File.Copy("sample-csharp/Calculator.cs", Path.Combine(testDir, "Calculator.cs"), true);
+            if (File.Exists("sample-csharp/UserService.cs"))
+                File.Copy("sample-csharp/UserService.cs", Path.Combine(testDir, "UserService.cs"), true);
+            if (File.Exists("sample-python/data_processor.py"))
+                File.Copy("sample-python/data_processor.py", Path.Combine(testDir, "data_processor.py"), true);
             
             // Initialize and index the directory
             await analyzer.InitializeAsync(testDir);
@@ -173,7 +132,7 @@ class DataProcessor:
                     }
                 };
                 
-                Console.WriteLine("Monitoring file changes... Make changes to files in test-project/");
+                Console.WriteLine("Monitoring file changes... Make changes to files in sample-mixed/");
                 Console.WriteLine("Press any key to stop monitoring.\n");
                 
                 // Simulate file changes
@@ -182,7 +141,7 @@ class DataProcessor:
                     await Task.Delay(1000);
                     
                     // Modify a file
-                    var filePath = Path.Combine("test-project", "Calculator.cs");
+                    var filePath = Path.Combine("sample-mixed", "Calculator.cs");
                     if (File.Exists(filePath))
                     {
                         var content = await File.ReadAllTextAsync(filePath);
@@ -193,7 +152,7 @@ class DataProcessor:
                     await Task.Delay(1000);
                     
                     // Add a new file
-                    await File.WriteAllTextAsync(Path.Combine("test-project", "MathHelpers.cs"), @"
+                    await File.WriteAllTextAsync(Path.Combine("sample-mixed", "MathHelpers.cs"), @"
 namespace TestProject
 {
     public static class MathHelpers
@@ -231,95 +190,38 @@ namespace TestProject
                 dashboard.UpdateStatistics(stats);
             };
             
-            // Create a workspace with mixed content
-            var workspace = "mixed-project";
+            // Create a workspace with mixed content from our samples
+            var workspace = "sample-realtime";
             Directory.CreateDirectory(workspace);
             
-            // Create various files
-            var files = new[]
-            {
-                ("Models/User.cs", @"
-namespace Models
-{
-    public class User
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
-}"),
-                ("Services/UserService.cs", @"
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Models;
-
-namespace Services
-{
-    public class UserService
-    {
-        private readonly List<User> _users = new();
-        
-        public User CreateUser(string name, string email)
-        {
-            var user = new User 
-            { 
-                Id = _users.Count + 1,
-                Name = name,
-                Email = email,
-                CreatedAt = DateTime.Now
-            };
-            _users.Add(user);
-            return user;
-        }
-        
-        public User GetUser(int id) => _users.FirstOrDefault(u => u.Id == id);
-        public IEnumerable<User> GetAllUsers() => _users.AsReadOnly();
-    }
-}"),
-                ("utils.py", @"
-import re
-from typing import List, Optional
-
-def validate_email(email: str) -> bool:
-    """"""Validate email address format""""""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
-
-def parse_name(full_name: str) -> tuple[str, str]:
-    """"""Parse full name into first and last name""""""
-    parts = full_name.strip().split(' ', 1)
-    first_name = parts[0]
-    last_name = parts[1] if len(parts) > 1 else ''
-    return first_name, last_name
-
-class NameParser:
-    def __init__(self):
-        self.prefixes = ['Mr.', 'Mrs.', 'Ms.', 'Dr.']
-    
-    def parse(self, name: str) -> dict:
-        # Remove prefixes
-        for prefix in self.prefixes:
-            if name.startswith(prefix):
-                name = name[len(prefix):].strip()
-                break
-        
-        first, last = parse_name(name)
-        return {'first': first, 'last': last}
-")
-            };
+            // Copy files from samples to create a mixed project
+            Directory.CreateDirectory(Path.Combine(workspace, "Models"));
+            Directory.CreateDirectory(Path.Combine(workspace, "Services"));
             
-            // Create directory structure and files
-            foreach (var (path, content) in files)
+            // Copy some C# files
+            if (File.Exists("sample-csharp/UserService.cs"))
             {
-                var fullPath = Path.Combine(workspace, path);
-                var dir = Path.GetDirectoryName(fullPath);
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    Directory.CreateDirectory(dir);
-                }
-                await File.WriteAllTextAsync(fullPath, content);
+                var content = await File.ReadAllTextAsync("sample-csharp/UserService.cs");
+                await File.WriteAllTextAsync(Path.Combine(workspace, "Services/UserService.cs"), content);
+            }
+            
+            if (File.Exists("sample-csharp/DataProcessor.cs"))
+            {
+                var content = await File.ReadAllTextAsync("sample-csharp/DataProcessor.cs");
+                await File.WriteAllTextAsync(Path.Combine(workspace, "DataProcessor.cs"), content);
+            }
+            
+            // Copy some Python files
+            if (File.Exists("sample-python/web_scraper.py"))
+            {
+                var content = await File.ReadAllTextAsync("sample-python/web_scraper.py");
+                await File.WriteAllTextAsync(Path.Combine(workspace, "web_scraper.py"), content);
+            }
+            
+            if (File.Exists("sample-python/file_utils.py"))
+            {
+                var content = await File.ReadAllTextAsync("sample-python/file_utils.py");
+                await File.WriteAllTextAsync(Path.Combine(workspace, "file_utils.py"), content);
             }
             
             // Initialize analyzer
@@ -331,24 +233,23 @@ class NameParser:
             
             // Make a change to trigger file watcher
             Console.WriteLine("\nMaking a change to trigger file watcher...");
-            var userServicePath = Path.Combine(workspace, "Services/UserService.cs");
-            var serviceContent = await File.ReadAllTextAsync(userServicePath);
-            serviceContent = serviceContent.Replace(
-                "public IEnumerable<User> GetAllUsers() => _users.AsReadOnly();",
-                @"public IEnumerable<User> GetAllUsers() => _users.AsReadOnly();
-        public void DeleteUser(int id) => _users.RemoveAll(u => u.Id == id);
-        public User UpdateUser(int id, string name, string email)
-        {
-            var user = GetUser(id);
-            if (user != null)
+            var dataProcessorPath = Path.Combine(workspace, "DataProcessor.cs");
+            if (File.Exists(dataProcessorPath))
             {
-                user.Name = name;
-                user.Email = email;
+                var content = await File.ReadAllTextAsync(dataProcessorPath);
+                // Add a new method to the StringDataProcessor class
+                content = content.Replace(
+                    "private async Task<string> ProcessStringAsync(string input)",
+                    @"public async Task<int> CountWordsAsync(string input)
+        {
+            await Task.Delay(1); // Simulate async operation
+            return input.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+        }
+        
+        private async Task<string> ProcessStringAsync(string input)"
+                );
+                await File.WriteAllTextAsync(dataProcessorPath, content);
             }
-            return user;
-        }"
-            );
-            await File.WriteAllTextAsync(userServicePath, serviceContent);
             
             await Task.Delay(2000);
             dashboard.Stop();

@@ -39,11 +39,16 @@ namespace Examples
             // Get the analyzer service
             var analyzer = serviceProvider.GetRequiredService<ICodeAnalyzerService>();
             
-            // Example 1: Analyze a single C# file
-            Console.WriteLine("=== Analyzing a Single C# File ===");
-            await AnalyzeSingleFile(analyzer);
+            // Initialize with the sample C# project
+            var samplePath = "sample-csharp";
+            Console.WriteLine($"Initializing analyzer with sample C# project at: {samplePath}");
+            await analyzer.InitializeAsync(samplePath);
             
-            // Example 2: Search for classes in a project
+            // Example 1: Analyze a single C# file
+            Console.WriteLine("\n=== Analyzing Calculator.cs ===");
+            await AnalyzeSingleFile(analyzer, "sample-csharp/Calculator.cs");
+            
+            // Example 2: Search for classes in the project
             Console.WriteLine("\n=== Searching for Classes ===");
             await SearchForClasses(analyzer);
             
@@ -54,15 +59,16 @@ namespace Examples
             // Example 4: Get file statistics
             Console.WriteLine("\n=== File Statistics ===");
             await ShowFileStatistics(analyzer);
+            
+            // Example 5: Analyze interfaces
+            Console.WriteLine("\n=== Analyzing Interfaces ===");
+            await AnalyzeInterfaces(analyzer);
         }
         
-        static async Task AnalyzeSingleFile(ICodeAnalyzerService analyzer)
+        static async Task AnalyzeSingleFile(ICodeAnalyzerService analyzer, string filePath)
         {
-            // Initialize with current directory (or specify a path)
-            await analyzer.InitializeAsync(".");
-            
-            // Analyze this example file itself
-            var structure = await analyzer.GetFileStructureAsync("CSharpAnalysisExample.cs");
+            // Analyze the specified file
+            var structure = await analyzer.GetFileStructureAsync(filePath);
             
             Console.WriteLine($"File: {structure.FilePath}");
             Console.WriteLine($"Language: {structure.Language}");
@@ -141,6 +147,34 @@ namespace Examples
                 foreach (var lang in stats.LanguageDistribution)
                 {
                     Console.WriteLine($"  {lang.Key}: {lang.Value} files");
+                }
+            }
+        }
+        
+        static async Task AnalyzeInterfaces(ICodeAnalyzerService analyzer)
+        {
+            // Search for all interfaces
+            var interfaces = await analyzer.SearchSymbolsAsync("*", new SymbolFilter 
+            { 
+                Kinds = new[] { SymbolKind.Interface } 
+            });
+            
+            Console.WriteLine($"Found {interfaces.Count()} interfaces:");
+            foreach (var iface in interfaces)
+            {
+                Console.WriteLine($"  {iface.Name}");
+                
+                // Find methods in this interface
+                // Note: To find methods within a specific interface, we would need to
+                // filter by file path or use a more specific search query
+                var methods = await analyzer.SearchSymbolsAsync(iface.Name + ".*", new SymbolFilter
+                {
+                    Kinds = new[] { SymbolKind.Method }
+                });
+                
+                if (methods.Any())
+                {
+                    Console.WriteLine($"    Methods: {string.Join(", ", methods.Select(m => m.Name))}");
                 }
             }
         }

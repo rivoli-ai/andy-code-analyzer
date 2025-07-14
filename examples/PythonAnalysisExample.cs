@@ -38,15 +38,14 @@ namespace Examples
             var serviceProvider = services.BuildServiceProvider();
             var analyzer = serviceProvider.GetRequiredService<ICodeAnalyzerService>();
             
-            // Create a sample Python file to analyze
-            await CreateSamplePythonFile();
+            // Initialize analyzer with sample Python directory
+            var samplePath = "sample-python";
+            Console.WriteLine($"Initializing analyzer with sample Python project at: {samplePath}");
+            await analyzer.InitializeAsync(samplePath);
             
-            // Initialize analyzer
-            await analyzer.InitializeAsync(".");
-            
-            // Example 1: Analyze the Python file
-            Console.WriteLine("=== Analyzing Python File ===");
-            await AnalyzePythonFile(analyzer);
+            // Example 1: Analyze a Python file
+            Console.WriteLine("\n=== Analyzing data_processor.py ===");
+            await AnalyzePythonFile(analyzer, "sample-python/data_processor.py");
             
             // Example 2: Search for functions and methods
             Console.WriteLine("\n=== Searching for Functions ===");
@@ -61,124 +60,10 @@ namespace Examples
             await AnalyzeComplexity(analyzer);
         }
         
-        static async Task CreateSamplePythonFile()
+        
+        static async Task AnalyzePythonFile(ICodeAnalyzerService analyzer, string filePath)
         {
-            var pythonCode = @"#!/usr/bin/env python3
-""""""
-Sample Python module for demonstrating code analysis.
-This module contains various Python constructs to analyze.
-""""""
-
-import os
-import sys
-from datetime import datetime
-from typing import List, Optional, Dict
-import asyncio
-
-# Constants
-DEFAULT_TIMEOUT = 30
-MAX_RETRIES = 3
-
-class BaseProcessor:
-    """"""Base class for all processors""""""
-    
-    def __init__(self, name: str):
-        self.name = name
-        self._internal_state = {}
-    
-    def process(self, data: Dict) -> bool:
-        """"""Process data and return success status""""""
-        raise NotImplementedError()
-
-class DataProcessor(BaseProcessor):
-    """"""
-    Main data processor implementation.
-    Handles various data transformation tasks.
-    """"""
-    
-    def __init__(self, name: str, config: Optional[Dict] = None):
-        super().__init__(name)
-        self.config = config or {}
-        self._cache = {}
-    
-    def process(self, data: Dict) -> bool:
-        """"""Process data with validation and transformation""""""
-        if not self._validate_data(data):
-            return False
-        
-        # Complex processing logic
-        for key, value in data.items():
-            if isinstance(value, list):
-                data[key] = self._process_list(value)
-            elif isinstance(value, dict):
-                data[key] = self._process_dict(value)
-        
-        return True
-    
-    def _validate_data(self, data: Dict) -> bool:
-        """"""Validate input data""""""
-        return bool(data) and 'id' in data
-    
-    @staticmethod
-    def _process_list(items: List) -> List:
-        """"""Process list items""""""
-        return [item.upper() if isinstance(item, str) else item for item in items]
-    
-    @classmethod
-    def from_config(cls, config_path: str) -> 'DataProcessor':
-        """"""Create processor from configuration file""""""
-        # Load config logic here
-        return cls('ConfiguredProcessor', {})
-
-async def async_fetch_data(url: str) -> Dict:
-    """"""Asynchronously fetch data from URL""""""
-    # Simulated async operation
-    await asyncio.sleep(0.1)
-    return {'url': url, 'data': 'sample'}
-
-def calculate_metrics(values: List[float]) -> Dict[str, float]:
-    """"""
-    Calculate statistical metrics for a list of values.
-    
-    Args:
-        values: List of numerical values
-        
-    Returns:
-        Dictionary containing mean, min, max, and sum
-    """"""
-    if not values:
-        return {'mean': 0, 'min': 0, 'max': 0, 'sum': 0}
-    
-    total = sum(values)
-    return {
-        'mean': total / len(values),
-        'min': min(values),
-        'max': max(values),
-        'sum': total
-    }
-
-# Module-level function
-def main():
-    """"""Main entry point""""""
-    processor = DataProcessor('MainProcessor')
-    test_data = {'id': 1, 'values': [1, 2, 3]}
-    
-    if processor.process(test_data):
-        print('Processing successful')
-    else:
-        print('Processing failed')
-
-if __name__ == '__main__':
-    main()
-";
-            
-            await File.WriteAllTextAsync("sample_python_module.py", pythonCode);
-            Console.WriteLine("Created sample_python_module.py for analysis");
-        }
-        
-        static async Task AnalyzePythonFile(ICodeAnalyzerService analyzer)
-        {
-            var structure = await analyzer.GetFileStructureAsync("sample_python_module.py");
+            var structure = await analyzer.GetFileStructureAsync(filePath);
             
             Console.WriteLine($"File: {structure.FilePath}");
             Console.WriteLine($"Language: {structure.Language}");
@@ -253,6 +138,9 @@ if __name__ == '__main__':
                 Console.WriteLine($"  {staticMarker}{classMarker}{visibility} {method.Name}() in {method.ParentSymbol}");
             }
         }
+        
+        // Remove the CreateSamplePythonFile method as we now use real files
+        // The method was at lines 64-177
         
         static async Task FindClassesWithInheritance(ICodeAnalyzerService analyzer)
         {
