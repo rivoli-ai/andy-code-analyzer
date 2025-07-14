@@ -39,7 +39,8 @@ namespace Examples
             var analyzer = serviceProvider.GetRequiredService<ICodeAnalyzerService>();
             
             // Initialize analyzer with sample Python directory
-            var samplePath = "sample-python";
+            var baseDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var samplePath = Path.Combine(baseDir, "sample-python");
             Console.WriteLine($"Initializing analyzer with sample Python project at: {samplePath}");
             await analyzer.InitializeAsync(samplePath);
             
@@ -167,7 +168,9 @@ namespace Examples
         
         static async Task AnalyzeComplexity(ICodeAnalyzerService analyzer)
         {
-            var structure = await analyzer.GetFileStructureAsync("sample_python_module.py");
+            var baseDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+            var fullPath = Path.Combine(baseDir, "sample-python/data_processor.py");
+            var structure = await analyzer.GetFileStructureAsync(fullPath);
             
             // Look for complexity metrics in metadata
             var complexityMetrics = structure.Metadata

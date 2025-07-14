@@ -11,22 +11,22 @@ To run any of the examples, use the `dotnet run` command from the examples direc
 cd examples
 
 # Run the C# analysis example
-dotnet run -p Examples.csproj --property:StartupObject=Examples.CSharpAnalysisExample
+dotnet run CSharpAnalysisExample
 
 # Run the Python analysis example  
-dotnet run -p Examples.csproj --property:StartupObject=Examples.PythonAnalysisExample
+dotnet run PythonAnalysisExample
 
 # Run the events example
-dotnet run -p Examples.csproj --property:StartupObject=Examples.EventsExample
+dotnet run EventsExample
 ```
 
 Or from the project root:
 
 ```bash
 # Run examples from the root directory
-dotnet run --project examples/Examples.csproj --property:StartupObject=Examples.CSharpAnalysisExample
-dotnet run --project examples/Examples.csproj --property:StartupObject=Examples.PythonAnalysisExample
-dotnet run --project examples/Examples.csproj --property:StartupObject=Examples.EventsExample
+dotnet run --project examples/Examples.csproj CSharpAnalysisExample
+dotnet run --project examples/Examples.csproj PythonAnalysisExample
+dotnet run --project examples/Examples.csproj EventsExample
 ```
 
 ## Examples Overview
