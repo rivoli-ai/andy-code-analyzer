@@ -33,6 +33,18 @@ namespace Examples
                 options.DatabaseConnectionString = "Data Source=csharp-analysis.db";
                 options.EnableFileWatcher = false; // Disable for this example
                 options.IndexOnStartup = true;
+                // Override ignore patterns to allow indexing our sample files in bin directory
+                options.IgnorePatterns = new[]
+                {
+                    "**/node_modules/**",
+                    "**/obj/**",
+                    "**/.git/**",
+                    "**/dist/**",
+                    "**/.vs/**",
+                    "**/.vscode/**",
+                    "**/.idea/**"
+                    // Removed **/bin/** to allow indexing our sample files
+                };
             });
             
             var serviceProvider = services.BuildServiceProvider();
@@ -45,6 +57,13 @@ namespace Examples
             var samplePath = Path.Combine(baseDir, "sample-csharp");
             Console.WriteLine($"Initializing analyzer with sample C# project at: {samplePath}");
             await analyzer.InitializeAsync(samplePath);
+            
+            // Wait a bit for indexing to complete
+            await Task.Delay(2000);
+            
+            // Get statistics to verify indexing completed
+            var stats = await analyzer.GetStatisticsAsync();
+            Console.WriteLine($"\nIndexing complete: {stats.TotalFiles} files, {stats.TotalSymbols} symbols");
             
             // Example 1: Analyze a single C# file
             Console.WriteLine("\n=== Analyzing Calculator.cs ===");
@@ -101,19 +120,40 @@ namespace Examples
         static async Task SearchForClasses(ICodeAnalyzerService analyzer)
         {
             // Search for all classes
-            var classes = await analyzer.SearchSymbolsAsync("*", new SymbolFilter 
+            var filter = new SymbolFilter 
             { 
-                Kinds = new[] { SymbolKind.Class } 
-            });
+                Kinds = new[] { SymbolKind.Class },
+                MaxResults = 100
+            };
+            Console.WriteLine($"Searching for kinds: {string.Join(", ", filter.Kinds)}");
             
-            Console.WriteLine($"Found {classes.Count()} classes:");
-            foreach (var cls in classes)
+            // Try different search patterns
+            Console.WriteLine("\nSearching with empty query:");
+            var classes1 = await analyzer.SearchSymbolsAsync("", filter);
+            Console.WriteLine($"Found {classes1.Count()} classes");
+            
+            Console.WriteLine("\nSearching with wildcard (*):");
+            var classes2 = await analyzer.SearchSymbolsAsync("*", filter);
+            Console.WriteLine($"Found {classes2.Count()} classes");
+            
+            var allClasses = classes1.Count() > classes2.Count() ? classes1 : classes2;
+            
+            if (allClasses.Any())
             {
-                Console.WriteLine($"  {cls.Name}");
-                if (cls.ParentSymbol != null)
+                Console.WriteLine("\nClasses found:");
+                foreach (var cls in allClasses)
                 {
-                    Console.WriteLine($"    Parent: {cls.ParentSymbol}");
+                    Console.WriteLine($"  {cls.Name}");
+                    if (cls.ParentSymbol != null)
+                    {
+                        Console.WriteLine($"    Parent: {cls.ParentSymbol}");
+                    }
                 }
+            }
+            else
+            {
+                Console.WriteLine("No classes found. Checking database...");
+                // This will help us debug
             }
         }
         

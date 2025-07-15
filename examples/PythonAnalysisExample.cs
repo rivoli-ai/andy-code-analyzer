@@ -32,7 +32,21 @@ namespace Examples
             {
                 options.DatabaseConnectionString = "Data Source=python-analysis.db";
                 options.EnableFileWatcher = false;
-                options.IndexOnStartup = false; // We'll index specific files
+                options.IndexOnStartup = true; // Enable startup indexing
+                // Override ignore patterns to allow indexing our sample files in bin directory
+                options.IgnorePatterns = new[]
+                {
+                    "**/node_modules/**",
+                    "**/obj/**",
+                    "**/.git/**",
+                    "**/dist/**",
+                    "**/.vs/**",
+                    "**/.vscode/**",
+                    "**/.idea/**",
+                    "**/__pycache__/**",
+                    "**/.pytest_cache/**"
+                    // Removed **/bin/** to allow indexing our sample files
+                };
             });
             
             var serviceProvider = services.BuildServiceProvider();

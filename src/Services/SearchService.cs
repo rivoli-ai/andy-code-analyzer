@@ -76,7 +76,7 @@ public class SearchService : ISearchService
             .AsQueryable();
 
         // Apply name filter
-        if (!string.IsNullOrEmpty(query))
+        if (!string.IsNullOrEmpty(query) && query != "*")
         {
             queryBuilder = queryBuilder.Where(s => EF.Functions.Like(s.Name, $"%{query}%"));
         }

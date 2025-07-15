@@ -174,10 +174,30 @@ public class IndexingService : IIndexingService
     }
 
     /// <inheritdoc/>
-    public Task<IndexingStatistics> GetStatisticsAsync()
+    public async Task<IndexingStatistics> GetStatisticsAsync()
     {
-        // TODO: Implement statistics retrieval
-        return Task.FromResult(new IndexingStatistics());
+        var stats = new IndexingStatistics();
+        
+        // Get file count
+        stats.TotalFilesIndexed = await _dbContext.Files.CountAsync();
+        
+        // Get symbol count
+        stats.TotalSymbolsExtracted = await _dbContext.Symbols.CountAsync();
+        
+        // Get last index time
+        var lastFile = await _dbContext.Files
+            .OrderByDescending(f => f.IndexedAt)
+            .FirstOrDefaultAsync();
+            
+        if (lastFile != null)
+        {
+            stats.LastIndexTime = lastFile.IndexedAt;
+        }
+        
+        // TODO: Track actual indexing duration
+        stats.IndexingDuration = TimeSpan.Zero;
+        
+        return stats;
     }
 
     private Task RemoveFileFromIndexAsync(string filePath, CancellationToken cancellationToken)

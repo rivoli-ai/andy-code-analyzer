@@ -34,9 +34,20 @@ namespace Examples
             {
                 options.DatabaseConnectionString = "Data Source=events-example.db";
                 options.EnableFileWatcher = true;
-                options.EnableFileWatcher = true;
                 options.IndexOnStartup = true;
                 options.DebounceDelay = TimeSpan.FromMilliseconds(500);
+                // Override ignore patterns to allow indexing our sample files in bin directory
+                options.IgnorePatterns = new[]
+                {
+                    "**/node_modules/**",
+                    "**/obj/**",
+                    "**/.git/**",
+                    "**/dist/**",
+                    "**/.vs/**",
+                    "**/.vscode/**",
+                    "**/.idea/**"
+                    // Removed **/bin/** to allow indexing our sample files
+                };
             });
             
             var serviceProvider = services.BuildServiceProvider();
