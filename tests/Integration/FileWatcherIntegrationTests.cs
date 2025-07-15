@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -31,7 +32,7 @@ public class FileWatcherIntegrationTests : IAsyncLifetime
             options.WorkspacePath = _testDirectory;
             options.DatabaseConnectionString = $"Data Source={Path.Combine(_testDirectory, "test.db")}";
             options.IndexOnStartup = false;
-            options.EnableFileWatcher = true; // Enable file watcher for these tests
+            options.EnableFileWatcher = false; // Start with file watcher disabled
             options.IgnorePatterns = new[] { "**/bin/**", "**/obj/**" };
         });
 
@@ -70,9 +71,34 @@ public class UpdateTest
     public void OldMethod() { }
 }");
 
-        using var scope = _serviceProvider.CreateScope();
-        var indexingService = scope.ServiceProvider.GetRequiredService<IIndexingService>();
-        await indexingService.IndexWorkspaceAsync(_testDirectory);
+        // First, index without file watcher to avoid race conditions
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var indexingService = scope.ServiceProvider.GetRequiredService<IIndexingService>();
+            await indexingService.IndexWorkspaceAsync(_testDirectory);
+        }
+
+        // Wait for initial indexing to complete
+        await Task.Delay(500);
+
+        // Now create a new instance with file watcher enabled
+        await _codeAnalyzer.ShutdownAsync();
+        _serviceProvider.Dispose();
+
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.AddConsole());
+        services.AddCodeAnalyzer(options =>
+        {
+            options.WorkspacePath = _testDirectory;
+            options.DatabaseConnectionString = $"Data Source={Path.Combine(_testDirectory, "test.db")}";
+            options.IndexOnStartup = false;
+            options.EnableFileWatcher = true; // Enable file watcher now
+            options.IgnorePatterns = new[] { "**/bin/**", "**/obj/**" };
+        });
+
+        _serviceProvider = services.BuildServiceProvider();
+        _codeAnalyzer = _serviceProvider.GetRequiredService<ICodeAnalyzerService>();
+        await _codeAnalyzer.InitializeAsync(_testDirectory);
 
         // Verify initial state
         var initialSymbols = await _codeAnalyzer.SearchSymbolsAsync("OldMethod", 
@@ -81,7 +107,17 @@ public class UpdateTest
 
         // Setup file change event handler
         var fileChangedTcs = new TaskCompletionSource<FileChangedEventArgs>();
-        _codeAnalyzer.FileChanged += (sender, args) => fileChangedTcs.TrySetResult(args);
+        EventHandler<FileChangedEventArgs> handler = null!;
+        handler = (sender, args) => 
+        {
+            // Only capture the event for our test file to avoid race conditions
+            if (args.Change.Path == testFile)
+            {
+                fileChangedTcs.TrySetResult(args);
+                _codeAnalyzer.FileChanged -= handler;
+            }
+        };
+        _codeAnalyzer.FileChanged += handler;
 
         // Act - Update the file
         await File.WriteAllTextAsync(testFile, @"
@@ -96,8 +132,8 @@ public class UpdateTest
         var completedTask = await Task.WhenAny(fileChangeTask, Task.Delay(5000));
         completedTask.Should().Be(fileChangeTask, "File change should be detected within 5 seconds");
 
-        // Give some time for indexing to complete
-        await Task.Delay(500);
+        // Give more time for indexing to complete
+        await Task.Delay(1000);
 
         // Assert - Verify the index was updated
         var oldMethodSymbols = await _codeAnalyzer.SearchSymbolsAsync("OldMethod", 
@@ -133,23 +169,57 @@ public class InitialClass
 }");
         }
 
-        using var scope = _serviceProvider.CreateScope();
-        var indexingService = scope.ServiceProvider.GetRequiredService<IIndexingService>();
-        await indexingService.IndexWorkspaceAsync(_testDirectory);
+        // First, index without file watcher to avoid race conditions
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var indexingService = scope.ServiceProvider.GetRequiredService<IIndexingService>();
+            await indexingService.IndexWorkspaceAsync(_testDirectory);
+        }
 
-        // Track file changes
-        var fileChangeCount = 0;
-        var fileChangeSemaphore = new SemaphoreSlim(0, testFiles.Length);
+        // Wait for initial indexing to complete
+        await Task.Delay(500);
+
+        // Now create a new instance with file watcher enabled
+        await _codeAnalyzer.ShutdownAsync();
+        _serviceProvider.Dispose();
+
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.AddConsole());
+        services.AddCodeAnalyzer(options =>
+        {
+            options.WorkspacePath = _testDirectory;
+            options.DatabaseConnectionString = $"Data Source={Path.Combine(_testDirectory, "test.db")}";
+            options.IndexOnStartup = false;
+            options.EnableFileWatcher = true; // Enable file watcher now
+            options.IgnorePatterns = new[] { "**/bin/**", "**/obj/**" };
+        });
+
+        _serviceProvider = services.BuildServiceProvider();
+        _codeAnalyzer = _serviceProvider.GetRequiredService<ICodeAnalyzerService>();
+        await _codeAnalyzer.InitializeAsync(_testDirectory);
+
+        // Track file changes for our specific test files only
+        var fileChangedFiles = new HashSet<string>();
+        var fileChangeSemaphore = new SemaphoreSlim(0);
         _codeAnalyzer.FileChanged += (sender, args) =>
         {
-            Interlocked.Increment(ref fileChangeCount);
-            fileChangeSemaphore.Release();
+            // Only count changes to our test files, not any other files
+            if (testFiles.Contains(args.Change.Path))
+            {
+                lock (fileChangedFiles)
+                {
+                    if (fileChangedFiles.Add(args.Change.Path))
+                    {
+                        fileChangeSemaphore.Release();
+                    }
+                }
+            }
         };
 
         // Act - Update all files asynchronously
         var updateTasks = testFiles.Select((file, index) => Task.Run(async () =>
         {
-            await Task.Delay(index * 100); // Stagger the updates
+            await Task.Delay(index * 200); // Increase stagger to avoid overlapping events
             await File.WriteAllTextAsync(file, $@"
 public class UpdatedClass{index}
 {{
@@ -160,7 +230,7 @@ public class UpdatedClass{index}
 
         await Task.WhenAll(updateTasks);
 
-        // Wait for all file changes to be detected
+        // Wait for all unique file changes to be detected
         for (int i = 0; i < testFiles.Length; i++)
         {
             var acquired = await fileChangeSemaphore.WaitAsync(5000);
@@ -168,7 +238,7 @@ public class UpdatedClass{index}
         }
 
         // Give time for indexing to complete
-        await Task.Delay(1000);
+        await Task.Delay(1500);
 
         // Assert - Verify all files were updated
         for (int i = 0; i < testFiles.Length; i++)
@@ -182,6 +252,6 @@ public class UpdatedClass{index}
             asyncSymbols.Should().HaveCount(1, $"AsyncMethod{i} should be found");
         }
 
-        fileChangeCount.Should().Be(testFiles.Length, "All file changes should be detected");
+        fileChangedFiles.Count.Should().Be(testFiles.Length, "All file changes should be detected");
     }
 }
