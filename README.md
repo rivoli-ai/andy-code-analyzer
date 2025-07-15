@@ -1,6 +1,6 @@
 # Andy.CodeAnalyzer
 
-A powerful code analysis library for the Andy AI assistant that provides real-time code indexing, searching, and context understanding capabilities.
+A code analysis library for the Andy AI assistant that provides real-time code indexing, searching, and context understanding capabilities.
 
 ## Features
 

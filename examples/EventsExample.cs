@@ -79,10 +79,10 @@ namespace Examples
                 var percentage = (e.ProcessedFiles * 100.0) / e.TotalFiles;
                 progressBar.Update(percentage, e.CurrentFile ?? string.Empty);
                 
-                if (e.IsComplete)
+                if (e.IsComplete && !indexingComplete.Task.IsCompleted)
                 {
                     progressBar.Complete($"Indexed {e.ProcessedFiles} files successfully!");
-                    indexingComplete.SetResult(true);
+                    indexingComplete.TrySetResult(true);
                 }
             };
             
