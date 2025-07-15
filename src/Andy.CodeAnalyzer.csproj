@@ -8,6 +8,25 @@
     <AnalysisMode>Default</AnalysisMode>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CA1812</NoWarn>
+    
+    <!-- NuGet Package Metadata -->
+    <PackageId>Andy.CodeAnalyzer</PackageId>
+    <Authors>Sami Ben Grine</Authors>
+    <Company>Rivoli AI</Company>
+    <Product>Andy.CodeAnalyzer</Product>
+    <Description>A code analysis library for the Andy AI assistant that provides real-time code indexing, searching, and context understanding capabilities.</Description>
+    <PackageTags>code-analysis;indexing;search;ai;assistant;csharp;python;roslyn</PackageTags>
+    <PackageProjectUrl>https://github.com/rivoli-ai/andy-code-analyzer</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/rivoli-ai/andy-code-analyzer</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>code_analyzer_icon.png</PackageIcon>
+    <Copyright>Copyright (c) 2025 Rivoli AI</Copyright>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +42,11 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Andy.CodeAnalyzer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\assets\code_analyzer_icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
