@@ -95,3 +95,9 @@ tools/
 *.db-shm
 *.db-wal
 *.db-journal
+
+# Code assistants
+.claude/
+claude.md
+.andy/
+andy.md
