@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Get the current branch name
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Define valid branch name pattern
+# Example: feature/*, fix/*, hotfix/*, release/*, chore/*
+valid_branch_regex="^(feature|fix|hotfix|release|chore)\/[a-z0-9-]+$"
+
+# Check if we're on main or develop (allowed for direct pushes in some cases)
+if [[ "$branch" == "main" ]] || [[ "$branch" == "develop" ]]; then
+    exit 0
+fi
+
+# Validate branch name
+if [[ ! "$branch" =~ $valid_branch_regex ]]; then
+    echo "❌ Branch name '$branch' does not follow naming convention."
+    echo ""
+    echo "Branch names must follow the pattern: {type}/{description}"
+    echo "Where {type} is one of: feature, fix, hotfix, release, chore"
+    echo "And {description} is lowercase with hyphens (a-z, 0-9, -)"
+    echo ""
+    echo "Examples:"
+    echo "  ✅ feature/add-user-authentication"
+    echo "  ✅ fix/resolve-memory-leak"
+    echo "  ✅ hotfix/critical-security-patch"
+    echo "  ❌ feat/add-user-authentication (use 'feature' not 'feat')"
+    echo "  ❌ feature/Add-User-Auth (use lowercase)"
+    echo ""
+    exit 1
+fi
+
+exit 0

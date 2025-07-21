@@ -1,0 +1,40 @@
+name: Branch Naming Convention
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name
+        run: |
+          branch_name="${{ github.head_ref }}"
+          
+          # Define valid branch name pattern
+          valid_pattern="^(feature|fix|hotfix|release|chore)\/[a-z0-9-]+$"
+          
+          # Skip validation for certain branches
+          if [[ "$branch_name" == "main" ]] || [[ "$branch_name" == "develop" ]]; then
+            echo "✅ Branch '$branch_name' is allowed"
+            exit 0
+          fi
+          
+          # Validate branch name
+          if [[ ! "$branch_name" =~ $valid_pattern ]]; then
+            echo "❌ Invalid branch name: '$branch_name'"
+            echo ""
+            echo "Branch names must follow the pattern: {type}/{description}"
+            echo "Where {type} is one of: feature, fix, hotfix, release, chore"
+            echo "And {description} is lowercase with hyphens (a-z, 0-9, -)"
+            echo ""
+            echo "Examples:"
+            echo "  ✅ feature/add-user-authentication"
+            echo "  ✅ fix/resolve-memory-leak"
+            echo "  ✅ hotfix/critical-security-patch"
+            echo ""
+            exit 1
+          fi
+          
+          echo "✅ Branch name '$branch_name' follows the naming convention"
