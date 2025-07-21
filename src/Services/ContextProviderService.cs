@@ -25,9 +25,9 @@ public class ContextProviderService : ICodeContextProvider
         ICodeAnalyzerService analyzerService,
         ISearchService searchService)
     {
-        _logger = logger;
-        _analyzerService = analyzerService;
-        _searchService = searchService;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _analyzerService = analyzerService ?? throw new ArgumentNullException(nameof(analyzerService));
+        _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
     }
 
     /// <inheritdoc/>
